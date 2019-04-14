@@ -2,6 +2,7 @@ package ownerapi
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/url"
 )
 
@@ -24,7 +25,17 @@ type GetAuthTokenInput struct {
 	Password string
 }
 
-func (c *Client) GetAuthToken(input *GetAuthTokenInput) (*OwnerAPIAuthResponse, error) {
+func NewClient(httpClient *http.Client, input *GetAuthTokenInput) (*Client, error) {
+	client := &Client{HttpClient: httpClient}
+	resp, err := client.getAuthToken(input)
+	if err != nil {
+		return nil, err
+	}
+	client.OwnerAPIAuthResponse = resp
+	return client, nil
+}
+
+func (c *Client) getAuthToken(input *GetAuthTokenInput) (*OwnerAPIAuthResponse, error) {
 	resp, err := c.HttpClient.PostForm(baseURL+"/oauth/token", url.Values{
 		"grant_type":    {grantType},
 		"client_id":     {clientID},
@@ -42,7 +53,5 @@ func (c *Client) GetAuthToken(input *GetAuthTokenInput) (*OwnerAPIAuthResponse, 
 
 	var decoded OwnerAPIAuthResponse
 	err = json.NewDecoder(resp.Body).Decode(&decoded)
-
-	c.OwnerAPIAuthResponse = &decoded
 	return &decoded, err
 }
