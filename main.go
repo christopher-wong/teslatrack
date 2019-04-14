@@ -74,6 +74,7 @@ func SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// create an ownerapi client and auth to Tesla
 	client := ownerapi.Client{
 		HttpClient: &http.Client{},
 	}
@@ -87,12 +88,44 @@ func SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
+	// get the user's email from the JWT
 	claims, err := GetJWTClaims(r.Header.Get("Authorization"))
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+	userEmail := claims["email"]
 
-	fmt.Println(claims)
-	fmt.Println(resp)
+	// get the user's userID from the database
+	var userID int
+	err = db.QueryRow("SELECT id FROM users WHERE email=$1", userEmail).Scan(&userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	// write their tesla auth object to the database
+	query := `
+		INSERT INTO tesla_auth (
+			user_id,
+			access_token,
+			token_type,
+			expires_in,
+			refresh_token,
+			created_at
+		) VALUES ($1, $2, $3, $4, $5, $6)
+	`
+	if _, err = db.Query(query, userID, resp.AccessToken, resp.TokenType, resp.ExpiresIn, resp.RefreshToken, resp.CreatedAt); err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// return the Tesla auth credentials
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }
