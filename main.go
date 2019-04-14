@@ -6,7 +6,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 
 	jwt "github.com/dgrijalva/jwt-go"
 
@@ -56,16 +60,18 @@ func initDB() {
 }
 
 func main() {
+	r := mux.NewRouter()
+
 	// TODO: swap out router for Mux or Gin
-	http.HandleFunc("/user/auth/token", GetToken)
-	http.HandleFunc("/signup", Signup)
+	r.HandleFunc("/user/auth/token", GetTokenHandler).Methods("POST")
+	r.HandleFunc("/signup", SignupHandler).Methods("POST")
 
 	initDB()
 
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	log.Fatal(http.ListenAndServe(":8000", handlers.LoggingHandler(os.Stdout, r)))
 }
 
-func GetToken(w http.ResponseWriter, r *http.Request) {
+func GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 	creds := &Credentials{}
 	err := json.NewDecoder(r.Body).Decode(creds)
 	if err != nil {
@@ -131,7 +137,7 @@ func GetToken(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(tr)
 }
 
-func Signup(w http.ResponseWriter, r *http.Request) {
+func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	creds := &Credentials{}
 	err := json.NewDecoder(r.Body).Decode(creds)
 	if err != nil {
