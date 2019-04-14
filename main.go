@@ -74,16 +74,12 @@ func SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// create an ownerapi client and auth to Tesla
-	client := ownerapi.Client{
-		HttpClient: &http.Client{},
-	}
-
 	input := &ownerapi.GetAuthTokenInput{
 		Email:    teslaCreds.Email,
 		Password: teslaCreds.Password,
 	}
-	resp, err := client.GetAuthToken(input)
+	// create an ownerapi client and auth to Tesla
+	client, err := ownerapi.NewClient(&http.Client{}, input)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -119,6 +115,7 @@ func SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) {
 			created_at
 		) VALUES ($1, $2, $3, $4, $5, $6)
 	`
+	resp := client.OwnerAPIAuthResponse
 	if _, err = db.Query(query, userID, resp.AccessToken, resp.TokenType, resp.ExpiresIn, resp.RefreshToken, resp.CreatedAt); err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
