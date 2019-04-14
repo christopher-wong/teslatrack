@@ -30,9 +30,8 @@ const (
 	password = "a3uot0pp9bxzcxoa"
 	dbname   = "defaultdb"
 
-	redisHost     = "157.230.142.205"
-	redisPort     = 6379
-	redisPassword = FkNU6btkbjp + RwIG9529yJZG + EfNboVHEC6FzhpifbNMC0fIPC/MJP0/kvo3GYuT7LgkhGDVfE1gEDch
+	redisHost     = "157.230.142.205:6379"
+	redisPassword = "FkNU6btkbjp+RwIG9529yJZG+EfNboVHEC6FzhpifbNMC0fIPC/MJP0/kvo3GYuT7LgkhGDVfE1gEDch"
 )
 
 type Credentials struct {
@@ -55,7 +54,7 @@ func main() {
 		DB:       0,             // use default DB
 	})
 
-	pong, err := client.Ping().Result()
+	_, err := client.Ping().Result()
 	if err != nil {
 		fmt.Println("failed to connect to redis!")
 		panic(err)
