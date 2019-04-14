@@ -7,9 +7,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"teslad/ownerapi"
 
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
+	"github.com/christopher-wong/teslatrack/ownerapi"
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
