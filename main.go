@@ -7,15 +7,16 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
+	"teslad/ownerapi"
 
+	jwtmiddleware "github.com/auth0/go-jwt-middleware"
+	"github.com/codegangsta/negroni"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
 	jwt "github.com/dgrijalva/jwt-go"
 
 	_ "github.com/lib/pq"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var db *sql.DB
@@ -39,123 +40,59 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func initDB() {
-	var err error
-
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=require",
-		host, port, user, password, dbname)
-
-	db, err = sql.Open("postgres", psqlInfo)
-	if err != nil {
-		panic(err)
-	}
-
-	err = db.Ping()
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("Successfully connected!")
-}
-
 func main() {
+	dbinit()
+
 	r := mux.NewRouter()
+
+	var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
+		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+			return jwtKey, nil
+		},
+		SigningMethod: jwt.SigningMethodHS256,
+	})
 
 	// TODO: swap out router for Mux or Gin
 	r.HandleFunc("/user/auth/token", GetTokenHandler).Methods("POST")
-	r.HandleFunc("/signup", SignupHandler).Methods("POST")
-
-	initDB()
+	r.HandleFunc("/user/auth/signup", SignupHandler).Methods("POST")
+	r.Handle("/user/tesla-account", negroni.New(
+		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
+		negroni.Wrap(http.HandlerFunc(SetTeslaAccountHandler)),
+	)).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8000", handlers.LoggingHandler(os.Stdout, r)))
 }
 
-func GetTokenHandler(w http.ResponseWriter, r *http.Request) {
-	creds := &Credentials{}
-	err := json.NewDecoder(r.Body).Decode(creds)
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	result := db.QueryRow("SELECT password FROM USERS WHERE email=$1", creds.Email)
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	storedCreds := &Credentials{}
-	err = result.Scan(&storedCreds.Password)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			fmt.Println(err)
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		fmt.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// check the password
-	if err = bcrypt.CompareHashAndPassword([]byte(storedCreds.Password), []byte(creds.Password)); err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusUnauthorized)
-	}
-
-	// set expiration
-	expirationTime := time.Now().Add(60 * time.Minute)
-	claims := &Claims{
-		Email: creds.Email,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expirationTime.Unix(),
-		},
-	}
-
-	// declare token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtKey)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	tr := struct {
-		Name    string `json:"name"`
-		Value   string `json:"value"`
-		Expires int64  `json:"expires"`
-		Type    string `json:"type"`
-	}{
-		Name:    "token",
-		Value:   tokenString,
-		Expires: expirationTime.Unix(),
-		Type:    "bearer",
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tr)
-}
-
-func SignupHandler(w http.ResponseWriter, r *http.Request) {
-	creds := &Credentials{}
-	err := json.NewDecoder(r.Body).Decode(creds)
+func SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) {
+	// These are a user's Tesla creds.
+	// NEVER store these, just grab their token.
+	teslaCreds := &Credentials{}
+	err := json.NewDecoder(r.Body).Decode(teslaCreds)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(creds.Password), 8)
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
+	client := ownerapi.Client{
+		HttpClient: &http.Client{},
 	}
 
-	if _, err = db.Query("INSERT INTO users (email, password) VALUES ($1, $2)", creds.Email, string(hashedPassword)); err != nil {
+	input := &ownerapi.GetAuthTokenInput{
+		Email:    teslaCreds.Email,
+		Password: teslaCreds.Password,
+	}
+	resp, err := client.GetAuthToken(input)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	claims, err := GetJWTClaims(r.Header.Get("Authorization"))
+	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
-		return
 	}
+
+	fmt.Println(claims)
+	fmt.Println(resp)
 }
