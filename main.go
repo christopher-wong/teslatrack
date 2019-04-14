@@ -11,6 +11,7 @@ import (
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/christopher-wong/teslatrack/ownerapi"
 	"github.com/codegangsta/negroni"
+	"github.com/go-redis/redis"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
@@ -28,6 +29,10 @@ const (
 	user     = "doadmin"
 	password = "a3uot0pp9bxzcxoa"
 	dbname   = "defaultdb"
+
+	redisHost     = "157.230.142.205"
+	redisPort     = 6379
+	redisPassword = FkNU6btkbjp + RwIG9529yJZG + EfNboVHEC6FzhpifbNMC0fIPC/MJP0/kvo3GYuT7LgkhGDVfE1gEDch
 )
 
 type Credentials struct {
@@ -42,6 +47,19 @@ type Claims struct {
 
 func main() {
 	dbinit()
+
+	// connect to redis
+	client := redis.NewClient(&redis.Options{
+		Addr:     redisHost,
+		Password: redisPassword, // no password set
+		DB:       0,             // use default DB
+	})
+
+	pong, err := client.Ping().Result()
+	if err != nil {
+		fmt.Println("failed to connect to redis!")
+		panic(err)
+	}
 
 	r := mux.NewRouter()
 
