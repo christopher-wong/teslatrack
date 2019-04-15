@@ -53,7 +53,7 @@ func (c *Client) saveCarStatusForUserID(userID string) error {
 	}
 
 	insertQuery := `
-		INSERT INTO tesla.state (
+		INSERT INTO state (
 			user_id, timestamp, data
 		)
 		VALUES ($1, $2, $3)
@@ -62,6 +62,7 @@ func (c *Client) saveCarStatusForUserID(userID string) error {
 	_, err = c.Store.Exec(insertQuery, userID, time.Now(), resp)
 	if err != nil {
 		fmt.Println("failed to insert Tesla state into the database")
+		fmt.Println(err)
 		return err
 	}
 
