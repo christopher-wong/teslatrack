@@ -10,6 +10,7 @@ import (
 
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/christopher-wong/teslatrack/ownerapi"
+	"github.com/christopher-wong/teslatrack/poll"
 	"github.com/codegangsta/negroni"
 	"github.com/go-redis/redis"
 	"github.com/gorilla/handlers"
@@ -45,19 +46,6 @@ type Claims struct {
 }
 
 func runAPI() {
-	// connect to redis
-	client := redis.NewClient(&redis.Options{
-		Addr:     redisHost,
-		Password: redisPassword, // no password set
-		DB:       0,             // use default DB
-	})
-
-	_, err := client.Ping().Result()
-	if err != nil {
-		fmt.Println("failed to connect to redis!")
-		panic(err)
-	}
-
 	r := mux.NewRouter()
 
 	var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
@@ -78,11 +66,37 @@ func runAPI() {
 	log.Fatal(http.ListenAndServe(":8000", handlers.LoggingHandler(os.Stdout, r)))
 }
 
+func runBackgroundTasks() {
+	// connect to redis
+	client := redis.NewClient(&redis.Options{
+		Addr:     redisHost,
+		Password: redisPassword, // no password set
+		DB:       0,             // use default DB
+	})
+
+	_, err := client.Ping().Result()
+	if err != nil {
+		fmt.Println("failed to connect to redis!")
+		panic(err)
+	}
+
+	pollClient := &poll.Client{
+		RedisClient: client,
+		Store:       db,
+		HTTPClient:  &http.Client{},
+	}
+
+	pollClient.RunWorker()
+}
+
 func main() {
 	dbinit()
 
 	// start API server
 	go runAPI()
+
+	// run background tasks to poll car
+	go runBackgroundTasks()
 
 	// stop main thread from executing
 	select {}
