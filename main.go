@@ -98,7 +98,7 @@ func main() {
 	// run background tasks to poll car
 	go runBackgroundTasks()
 
-	// stop main thread from executing
+	// stop main thread from exiting
 	select {}
 }
 
