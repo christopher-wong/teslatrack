@@ -3,7 +3,10 @@ package poll
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/christopher-wong/teslatrack/ownerapi"
 	"github.com/go-redis/redis"
@@ -14,7 +17,7 @@ const workQueueID = "WorkQueue"
 type Client struct {
 	RedisClient *redis.Client
 	Store       *sql.DB
-	hHtpClient  *http.Client
+	HTTPClient  *http.Client
 	WorkQueueID string
 }
 
@@ -44,36 +47,74 @@ func (c *Client) RunWorker() {
 }
 
 func (c *Client) saveCarStatusForUserID(userID string) error {
-	c.pollCarForUserID(userID)
-	// TODO: implement saving
-	panic("Unimplemented!")
+	resp, err := c.pollCarForUserID(userID)
+	if err != nil {
+		log.Println(fmt.Sprintf("failed to poll car for userID: %s", userID))
+		return err
+	}
+
+	insertQuery := `
+		INSERT INTO tesla.state (
+			user_id, timestamp, data
+		)
+		VALUES ($1, $2, $3)
+	`
+
+	_, err = c.Store.Exec(insertQuery, userID, time.Now(), resp)
+	if err != nil {
+		fmt.Println("failed to insert Tesla state into the database")
+		return err
+	}
+
+	return nil
 }
 
 // fetches the data on tesla's servers
-func (c *Client) pollCarForUserID(userID string) (string, error) {
+func (c *Client) pollCarForUserID(userID string) ([]byte, error) {
 	token, err := c.tokenForUserID(userID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	teslaClient := &ownerapi.Client{
-		HttpClient:           c.hHtpClient,
-		OwnerAPIAuthResponse: token,
+		HttpClient: c.HTTPClient,
+		OwnerAPIAuthResponse: &ownerapi.OwnerAPIAuthResponse{
+			AccessToken: token,
+		},
 	}
 	resp, err := teslaClient.GetVehiclesList()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// for now only poll the first vehicle
 	if resp.Count > 0 {
-		// TODO: poll the vehicle and save the data
-		panic("Unimplemented!")
+		firstID := resp.Response[0].ID
+		resp, err := teslaClient.GetVehicleData(firstID)
+		if err != nil {
+			return nil, errors.New(fmt.Sprintf("failed to get vehicle data for user: %s | id: %d", userID, firstID))
+		}
+		return resp, nil
 	}
-	return "", errors.New("No available vehicles for given userID")
+	return nil, errors.New("No available vehicles for given userID")
 }
 
 // retrieves the tesla token for the given userID
-func (c *Client) tokenForUserID(userID string) (*ownerapi.OwnerAPIAuthResponse, error) {
-	//TODO: Implement this
-	panic("Unimplemented!")
+func (c *Client) tokenForUserID(userID string) (string, error) {
+	var accessToken string
+	err := c.Store.QueryRow(`
+		SELECT access_token
+		FROM tesla_auth
+		WHERE user_id = $1
+		ORDER BY id DESC
+	`, userID).Scan(&accessToken)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Println(err)
+			return "", err
+		}
+		fmt.Println(err)
+		return "", err
+	}
+
+	return accessToken, nil
 }

@@ -111,7 +111,7 @@ func SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) {
 
 	// get the user's userID from the database
 	var userID int
-	err = db.QueryRow("SELECT id FROM users WHERE email=$1", userEmail).Scan(&userID)
+	err = db.QueryRow("SELECT id FROM user WHERE email=$1", userEmail).Scan(&userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Println(err)
