@@ -43,6 +43,7 @@ func (c *Client) RunWorker() {
 	for userID := range queue {
 		err := c.saveCarStatusForUserID(userID)
 		if err != nil {
+			fmt.Println(err)
 			// TODO: log that we failed this
 		}
 	}
