@@ -44,9 +44,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func main() {
-	dbinit()
-
+func runAPI() {
 	// connect to redis
 	client := redis.NewClient(&redis.Options{
 		Addr:     redisHost,
@@ -78,6 +76,16 @@ func main() {
 	)).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8000", handlers.LoggingHandler(os.Stdout, r)))
+}
+
+func main() {
+	dbinit()
+
+	// start API server
+	go runAPI()
+
+	// stop main thread from executing
+	select {}
 }
 
 func SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) {
