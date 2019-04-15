@@ -43,7 +43,7 @@ func (c *Client) RunWorker() {
 	for userID := range queue {
 		err := c.saveCarStatusForUserID(userID)
 		if err != nil {
-			// TODO: log that  we failed this
+			// TODO: log that we failed this
 		}
 	}
 }
