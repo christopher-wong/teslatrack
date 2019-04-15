@@ -41,7 +41,11 @@ func (c *Client) RunWorker() {
 	queue := make(chan string, 2)
 	go c.PullWorkTo(queue)
 	for userID := range queue {
-		c.saveCarStatusForUserID(userID)
+		err := c.saveCarStatusForUserID(userID)
+		if err != nil {
+			fmt.Println(err)
+			// TODO: log that we failed this
+		}
 	}
 }
 
