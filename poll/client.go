@@ -18,11 +18,10 @@ type Client struct {
 	RedisClient *redis.Client
 	Store       *sql.DB
 	HTTPClient  *http.Client
-	WorkQueueID string
 }
 
 func (c *Client) fetchNextID() (string, error) {
-	return c.RedisClient.RPop(c.WorkQueueID).Result()
+	return c.RedisClient.RPop(workQueueID).Result()
 }
 
 // PullWorkTo loops forever, pulling work from the work queue and sending userID's to the given channel
