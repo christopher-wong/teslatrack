@@ -110,6 +110,7 @@ func (c *Client) tokenForUserID(userID string) (string, error) {
 		FROM tesla_auth
 		WHERE user_id = $1
 		ORDER BY id DESC
+		LIMIT 1;
 	`, userID).Scan(&accessToken)
 	if err != nil {
 		if err == sql.ErrNoRows {

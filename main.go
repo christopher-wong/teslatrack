@@ -11,6 +11,7 @@ import (
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/christopher-wong/teslatrack/ownerapi"
 	"github.com/christopher-wong/teslatrack/poll"
+	"github.com/christopher-wong/teslatrack/queuer"
 	"github.com/codegangsta/negroni"
 	"github.com/go-redis/redis"
 	"github.com/gorilla/handlers"
@@ -45,6 +46,35 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
+func main() {
+	dbinit()
+
+	// connect to redis
+	rc := redis.NewClient(&redis.Options{
+		Addr:     redisHost,
+		Password: redisPassword, // no password set
+		DB:       0,             // use default DB
+	})
+
+	_, err := rc.Ping().Result()
+	if err != nil {
+		fmt.Println("failed to connect to redis!")
+		panic(err)
+	}
+
+	// start API server
+	go runAPI()
+
+	// run background tasks to poll car
+	go runBackgroundPoll(rc)
+
+	// run background task to push work to Redis
+	go runBackgroundQueuer(rc)
+
+	// stop main thread from exiting
+	select {}
+}
+
 func runAPI() {
 	r := mux.NewRouter()
 
@@ -66,40 +96,23 @@ func runAPI() {
 	log.Fatal(http.ListenAndServe(":8000", handlers.LoggingHandler(os.Stdout, r)))
 }
 
-func runBackgroundTasks() {
-	// connect to redis
-	client := redis.NewClient(&redis.Options{
-		Addr:     redisHost,
-		Password: redisPassword, // no password set
-		DB:       0,             // use default DB
-	})
-
-	_, err := client.Ping().Result()
-	if err != nil {
-		fmt.Println("failed to connect to redis!")
-		panic(err)
+func runBackgroundQueuer(rc *redis.Client) {
+	client := &queuer.Client{
+		RedisClient: rc,
+		Store:       db,
 	}
 
+	client.RunQueuer()
+}
+
+func runBackgroundPoll(rc *redis.Client) {
 	pollClient := &poll.Client{
-		RedisClient: client,
+		RedisClient: rc,
 		Store:       db,
 		HTTPClient:  &http.Client{},
 	}
 
 	pollClient.RunWorker()
-}
-
-func main() {
-	dbinit()
-
-	// start API server
-	go runAPI()
-
-	// run background tasks to poll car
-	go runBackgroundTasks()
-
-	// stop main thread from exiting
-	select {}
 }
 
 func SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) {
