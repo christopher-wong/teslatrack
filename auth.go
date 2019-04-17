@@ -46,7 +46,7 @@ func GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	result := db.QueryRow("SELECT password FROM USER WHERE email=$1", creds.Email)
+	result := db.QueryRow("SELECT password FROM users WHERE email=$1", creds.Email)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -120,7 +120,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err = db.Query("INSERT INTO user (email, password) VALUES ($1, $2)", creds.Email, string(hashedPassword)); err != nil {
+	if _, err = db.Query("INSERT INTO users (email, password) VALUES ($1, $2)", creds.Email, string(hashedPassword)); err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return

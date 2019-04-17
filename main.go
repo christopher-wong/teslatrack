@@ -16,6 +16,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 
 	jwt "github.com/dgrijalva/jwt-go"
 
@@ -93,7 +94,14 @@ func runAPI() {
 		negroni.Wrap(http.HandlerFunc(SetTeslaAccountHandler)),
 	)).Methods("POST")
 
-	log.Fatal(http.ListenAndServe(":8000", handlers.LoggingHandler(os.Stdout, r)))
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:8000"},
+		AllowCredentials: true,
+	})
+
+	handler := c.Handler(r)
+
+	log.Fatal(http.ListenAndServe(":8000", handlers.LoggingHandler(os.Stdout, handler)))
 }
 
 func runBackgroundQueuer(rc *redis.Client) {
