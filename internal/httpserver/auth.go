@@ -1,54 +1,41 @@
-package main
+package server
 
 import (
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
-
-	_ "github.com/lib/pq"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func GetJWTClaims(tk string) (jwt.MapClaims, error) {
-	tkReplaced := strings.Replace(tk, "Bearer ", "", -1)
-
-	token, err := jwt.Parse(tkReplaced, func(token *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
-
-		return jwtKey, nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims, nil
-	}
-
-	return nil, errors.New("failed to validate claims")
+type Credentials struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-func GetTokenHandler(w http.ResponseWriter, r *http.Request) {
+type Claims struct {
+	Email string `json:"email"`
+	jwt.StandardClaims
+}
+
+func (s *Server) GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 	creds := &Credentials{}
 	err := json.NewDecoder(r.Body).Decode(creds)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	result := db.QueryRow("SELECT password FROM users WHERE email=$1", creds.Email)
+
+	result := s.db.QueryRow("SELECT password FROM users WHERE email=$1", creds.Email)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -56,18 +43,18 @@ func GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 	err = result.Scan(&storedCreds.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			fmt.Println(err)
+			log.Println(err)
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		fmt.Println(err)
+		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	// check the password
 	if err = bcrypt.CompareHashAndPassword([]byte(storedCreds.Password), []byte(creds.Password)); err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		w.WriteHeader(http.StatusUnauthorized)
 	}
 
@@ -104,25 +91,48 @@ func GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(tr)
 }
 
-func SignupHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	creds := &Credentials{}
 	err := json.NewDecoder(r.Body).Decode(creds)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(creds.Password), 8)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if _, err = db.Query("INSERT INTO users (email, password) VALUES ($1, $2)", creds.Email, string(hashedPassword)); err != nil {
-		fmt.Println(err)
+	if _, err = s.db.Query("INSERT INTO users (email, password) VALUES ($1, $2)", creds.Email, string(hashedPassword)); err != nil {
+		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+}
+
+func GetJWTClaims(tk string) (jwt.MapClaims, error) {
+	tkReplaced := strings.Replace(tk, "Bearer ", "", -1)
+
+	token, err := jwt.Parse(tkReplaced, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return jwtKey, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, errors.New("failed to validate claims")
 }

@@ -58,6 +58,14 @@
   version = "v1.7.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:ef4ded38927d1ade8d3f07cfabe2f37335c20af606060af83f11318ea76a4289"
+  name = "github.com/ianschenck/envflag"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9111d830d133f952887a936367fb0211c3134f0d"
+
+[[projects]]
   digest = "1:8ef506fc2bb9ced9b151dafa592d4046063d744c646c1bbe801982ce87e4bc24"
   name = "github.com/lib/pq"
   packages = [
@@ -67,6 +75,14 @@
   pruneopts = "UT"
   revision = "4ded0e9383f75c197b3a2aaa6d590ac52df6fd79"
   version = "v1.0.0"
+
+[[projects]]
+  digest = "1:b0c25f00bad20d783d259af2af8666969e2fc343fa0dc9efe52936bbd67fb758"
+  name = "github.com/rs/cors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9a47f48565a795472d43519dd49aac781f3034fb"
+  version = "v1.6.0"
 
 [[projects]]
   branch = "master"
@@ -89,7 +105,9 @@
     "github.com/go-redis/redis",
     "github.com/gorilla/handlers",
     "github.com/gorilla/mux",
+    "github.com/ianschenck/envflag",
     "github.com/lib/pq",
+    "github.com/rs/cors",
     "golang.org/x/crypto/bcrypt",
   ]
   solver-name = "gps-cdcl"

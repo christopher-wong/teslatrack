@@ -43,7 +43,7 @@ func (c *Client) RunWorker() {
 	for userID := range queue {
 		err := c.saveCarStatusForUserID(userID)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			// TODO: log that we failed this
 		}
 	}
@@ -66,7 +66,7 @@ func (c *Client) saveCarStatusForUserID(userID string) error {
 	_, err = c.Store.Exec(insertQuery, userID, time.Now(), resp)
 	if err != nil {
 		fmt.Println("failed to insert Tesla state into the database")
-		fmt.Println(err)
+		log.Println(err)
 		return err
 	}
 
@@ -114,10 +114,10 @@ func (c *Client) tokenForUserID(userID string) (string, error) {
 	`, userID).Scan(&accessToken)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			fmt.Println(err)
+			log.Println(err)
 			return "", err
 		}
-		fmt.Println(err)
+		log.Println(err)
 		return "", err
 	}
 
