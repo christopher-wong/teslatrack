@@ -48,6 +48,7 @@ func main() {
 	cfg := &server.Config{
 		ListenAddress: *listenAddr,
 		Dev:           *dev,
+		JwtKey:        jwtKey,
 	}
 
 	// start API server
@@ -66,7 +67,7 @@ func main() {
 	go runBackgroundPoll(rc, db)
 
 	// run background task to push work to Redis
-	go runBackgroundQueuer(rc, db)
+	// go runBackgroundQueuer(rc, db)
 
 	// stop main thread from exiting
 	select {}

@@ -109,7 +109,7 @@ func (c *Client) tokenForUserID(userID string) (string, error) {
 		SELECT access_token
 		FROM tesla_auth
 		WHERE user_id = $1
-		ORDER BY id DESC
+		ORDER BY created_at DESC
 		LIMIT 1;
 	`, userID).Scan(&accessToken)
 	if err != nil {

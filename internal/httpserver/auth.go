@@ -34,11 +34,6 @@ func (s *Server) GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := s.db.QueryRow("SELECT password FROM users WHERE email=$1", creds.Email)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 	storedCreds := &Credentials{}
 	err = result.Scan(&storedCreds.Password)
 	if err != nil {
@@ -69,7 +64,7 @@ func (s *Server) GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	// declare token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtKey)
+	tokenString, err := token.SignedString(s.cfg.JwtKey)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -114,7 +109,7 @@ func (s *Server) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetJWTClaims(tk string) (jwt.MapClaims, error) {
+func (s *Server) GetJWTClaims(tk string) (jwt.MapClaims, error) {
 	tkReplaced := strings.Replace(tk, "Bearer ", "", -1)
 
 	token, err := jwt.Parse(tkReplaced, func(token *jwt.Token) (interface{}, error) {
@@ -123,7 +118,7 @@ func GetJWTClaims(tk string) (jwt.MapClaims, error) {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return jwtKey, nil
+		return s.cfg.JwtKey, nil
 	})
 
 	if err != nil {

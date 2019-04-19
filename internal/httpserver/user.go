@@ -28,26 +28,30 @@ func (s *Server) SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) 
 	client, err := ownerapi.NewClient(&http.Client{}, input)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	// get the user's email from the JWT
-	claims, err := GetJWTClaims(r.Header.Get("Authorization"))
+	claims, err := s.GetJWTClaims(r.Header.Get("Authorization"))
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 	userEmail := claims["email"]
 
 	// get the user's userID from the database
 	var userID int
-	err = s.db.QueryRow("SELECT id FROM user WHERE email=$1", userEmail).Scan(&userID)
+	err = s.db.QueryRow("SELECT id FROM users WHERE email=$1", userEmail).Scan(&userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	// write their tesla auth object to the database
@@ -60,6 +64,13 @@ func (s *Server) SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) 
 			refresh_token,
 			created_at
 		) VALUES ($1, $2, $3, $4, $5, $6)
+		ON CONFLICT (user_id)
+		DO UPDATE SET
+			access_token = EXCLUDED.access_token,
+			token_type = EXCLUDED.token_type,
+			expires_in = EXCLUDED.expires_in,
+			refresh_token = EXCLUDED.refresh_token,
+			created_at = EXCLUDED.created_at;
 	`
 	resp := client.OwnerAPIAuthResponse
 	if _, err = s.db.Query(query, userID, resp.AccessToken, resp.TokenType, resp.ExpiresIn, resp.RefreshToken, resp.CreatedAt); err != nil {

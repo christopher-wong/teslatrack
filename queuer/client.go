@@ -45,6 +45,7 @@ func (c *Client) RunQueuer() {
 				fmt.Println("Failed to query db")
 				log.Fatal(err)
 			}
+			log.Printf("push queue id: %d\n", userID)
 			c.RedisClient.LPush(workQueueID, userID)
 		}
 		err = rows.Err()

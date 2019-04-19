@@ -14,8 +14,6 @@ import (
 	"github.com/rs/cors"
 )
 
-var jwtKey = []byte("my_secret_key")
-
 // Server is the translations server
 type Server struct {
 	cfg    *Config
@@ -27,13 +25,15 @@ type Server struct {
 type Config struct {
 	ListenAddress string
 	Dev           bool
+	JwtKey        []byte
 }
 
 // Run kicks off background tasks, then begins serving http
 // requests. Returns only when the underlying http server dies.
 func (s *Server) Run() error {
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:8000"},
+		AllowedHeaders:   []string{"*"},
+		AllowedOrigins:   []string{"*"},
 		AllowCredentials: true,
 	})
 
@@ -59,7 +59,7 @@ func New(cfg *Config, db *sql.DB) (*Server, error) {
 
 	var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
 		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
+			return cfg.JwtKey, nil
 		},
 		SigningMethod: jwt.SigningMethodHS256,
 	})
@@ -71,10 +71,10 @@ func New(cfg *Config, db *sql.DB) (*Server, error) {
 		negroni.Wrap(http.HandlerFunc(srv.SetTeslaAccountHandler)),
 	)).Methods("POST")
 
-	// r.Handle("/vehicle/summary", negroni.New(
-	// 	negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
-	// 	negroni.Wrap(http.HandlerFunc(GetTeslaSummary)),
-	// )).Methods("POST")
+	srv.router.Handle("/vehicle/basic-summary", negroni.New(
+		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
+		negroni.Wrap(http.HandlerFunc(srv.GetVehicleBasicSummary)),
+	)).Methods("GET")
 
 	return srv, nil
 }
