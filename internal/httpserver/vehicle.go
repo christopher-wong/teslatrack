@@ -21,26 +21,49 @@ type VehicleBasicSummary struct {
 }
 
 func (s *Server) GetVehicleBasicSummary(w http.ResponseWriter, r *http.Request) {
+	// get the user's email from the JWT
+	claims, err := s.GetJWTClaims(r.Header.Get("Authorization"))
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	userEmail := claims["email"]
+
+	// get the user's userID from the database
+	var userID int
+	err = s.db.QueryRow("SELECT id FROM users WHERE email=$1", userEmail).Scan(&userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	query := `
-	SELECT timestamp,
-       data -> 'response' ->> 'display_name'                        AS display_name,
-       data -> 'response' -> 'vehicle_state' ->> 'odometer'         AS odometer,
-       data -> 'response' -> 'charge_state' ->> 'charging_state'    AS charging_state,
-       data -> 'response' -> 'charge_state' ->> 'battery_level'     AS battery_level,
-       data -> 'response' -> 'charge_state' ->> 'battery_range'     AS battery_range,
-       data -> 'response' -> 'charge_state' ->> 'est_battery_range' AS est_battery_range,
-       data -> 'response' -> 'climate_state' ->> 'inside_temp'      AS inside_temp,
-       data -> 'response' -> 'climate_state' ->> 'outside_temp'     AS outside_temp
-	FROM state
-	WHERE user_id = 1
-	ORDER BY timestamp DESC
-	LIMIT 1;
+		SELECT timestamp,
+			data -> 'response' ->> 'display_name'                        AS display_name,
+			data -> 'response' -> 'vehicle_state' ->> 'odometer'         AS odometer,
+			data -> 'response' -> 'charge_state' ->> 'charging_state'    AS charging_state,
+			data -> 'response' -> 'charge_state' ->> 'battery_level'     AS battery_level,
+			data -> 'response' -> 'charge_state' ->> 'battery_range'     AS battery_range,
+			data -> 'response' -> 'charge_state' ->> 'est_battery_range' AS est_battery_range,
+			data -> 'response' -> 'climate_state' ->> 'inside_temp'      AS inside_temp,
+			data -> 'response' -> 'climate_state' ->> 'outside_temp'     AS outside_temp
+		FROM state
+		WHERE user_id = $1
+		ORDER BY timestamp DESC
+		LIMIT 1;
 	`
 
-	result := s.db.QueryRow(query)
+	result := s.db.QueryRow(query, userID)
 
 	obj := &VehicleBasicSummary{}
-	err := result.Scan(
+	err = result.Scan(
 		&obj.Timestamp,
 		&obj.DisplayName,
 		&obj.Odometer,
