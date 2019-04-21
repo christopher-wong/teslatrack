@@ -93,9 +93,15 @@ func (c *Client) pollCarForUserID(userID string) ([]byte, error) {
 	// for now only poll the first vehicle
 	if resp.Count > 0 {
 		firstID := resp.Response[0].ID
+
+		wakeResp, err := teslaClient.WakeUp(firstID)
+		if err != nil || wakeResp.Response.State != "online" {
+			return nil, fmt.Errorf("failed to wake up vehicle for user: %s | id: %d", userID, firstID)
+		}
+
 		resp, err := teslaClient.GetVehicleData(firstID)
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("failed to get vehicle data for user: %s | id: %d", userID, firstID))
+			return nil, fmt.Errorf("failed to get vehicle data for user: %s | id: %d", userID, firstID)
 		}
 		return resp, nil
 	}
