@@ -1,7 +1,7 @@
 # teslatrack
 
 ```bash
-go run cmd/teslatrackd/main.go
+make
 ```
 
 ## Redis

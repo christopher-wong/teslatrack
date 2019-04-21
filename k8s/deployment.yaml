@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tesla-track
+  labels:
+    app: tesla-track
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tesla-track
+  template:
+    metadata:
+      labels:
+        app: tesla-track
+    spec:
+      containers:
+      - name: tesla-track
+        image: teslatrackd:latest
+        ports:
+        - containerPort: 8000
+

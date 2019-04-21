@@ -58,6 +58,22 @@
   version = "v1.7.1"
 
 [[projects]]
+  digest = "1:af105c7c5dc0b4ae41991f122cae860b9600f7d226072c2a83127048c991660c"
+  name = "github.com/hashicorp/go-cleanhttp"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "eda1e5db218aad1db63ca4642c8906b26bcf2744"
+  version = "v0.5.1"
+
+[[projects]]
+  digest = "1:1ba2690391610cce08f12c42dd7e8b5f9114a697e85d695280c67b8487cfc38e"
+  name = "github.com/hashicorp/go-retryablehttp"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "357460732517ec3b57c05c51443296bdd6df1874"
+  version = "v0.5.3"
+
+[[projects]]
   branch = "master"
   digest = "1:ef4ded38927d1ade8d3f07cfabe2f37335c20af606060af83f11318ea76a4289"
   name = "github.com/ianschenck/envflag"
@@ -105,6 +121,7 @@
     "github.com/go-redis/redis",
     "github.com/gorilla/handlers",
     "github.com/gorilla/mux",
+    "github.com/hashicorp/go-retryablehttp",
     "github.com/ianschenck/envflag",
     "github.com/lib/pq",
     "github.com/rs/cors",
