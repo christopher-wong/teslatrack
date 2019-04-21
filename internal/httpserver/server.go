@@ -57,24 +57,26 @@ func New(cfg *Config, db *sql.DB) (*Server, error) {
 		db:     db,
 	}
 
+	srv.router.HandleFunc("/user/auth/token", srv.GetTokenHandler).Methods("POST")
+	srv.router.HandleFunc("/user/auth/signup", srv.SignupHandler).Methods("POST")
+
+	// protected routes
+	srv.router.Handle("/user/tesla-account", wrapAuthHandler(cfg.JwtKey, srv.SetTeslaAccountHandler)).Methods("POST")
+	srv.router.Handle("/vehicle/basic-summary", wrapAuthHandler(cfg.JwtKey, srv.GetVehicleBasicSummary)).Methods("GET")
+	srv.router.Handle("/vehicle/charging/sessions", wrapAuthHandler(cfg.JwtKey, srv.GetChargingSessionDetails)).Methods("GET")
+
+	return srv, nil
+}
+
+func wrapAuthHandler(jwtKey []byte, f func(w http.ResponseWriter, r *http.Request)) http.Handler {
 	var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
 		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
-			return cfg.JwtKey, nil
+			return jwtKey, nil
 		},
 		SigningMethod: jwt.SigningMethodHS256,
 	})
-
-	srv.router.HandleFunc("/user/auth/token", srv.GetTokenHandler).Methods("POST")
-	srv.router.HandleFunc("/user/auth/signup", srv.SignupHandler).Methods("POST")
-	srv.router.Handle("/user/tesla-account", negroni.New(
+	return negroni.New(
 		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
-		negroni.Wrap(http.HandlerFunc(srv.SetTeslaAccountHandler)),
-	)).Methods("POST")
-
-	srv.router.Handle("/vehicle/basic-summary", negroni.New(
-		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
-		negroni.Wrap(http.HandlerFunc(srv.GetVehicleBasicSummary)),
-	)).Methods("GET")
-
-	return srv, nil
+		negroni.Wrap(http.HandlerFunc(f)),
+	)
 }
