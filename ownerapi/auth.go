@@ -47,7 +47,7 @@ func (c *Client) getAuthToken(input *GetAuthTokenInput) (*OwnerAPIAuthResponse, 
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode < 200 && resp.StatusCode > 299 {
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return nil, err
 	}
 

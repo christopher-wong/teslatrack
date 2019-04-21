@@ -28,7 +28,7 @@ func (c *Client) GetVehicleData(id int64) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode < 200 && resp.StatusCode > 299 {
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return nil, err
 	}
 

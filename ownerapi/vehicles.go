@@ -39,7 +39,7 @@ func (c *Client) GetVehiclesList() (*VehiclesResponse, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode < 200 && resp.StatusCode > 299 {
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return nil, err
 	}
 
