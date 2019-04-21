@@ -8,4 +8,4 @@ docker run -it \
     -v ./go/src/github.com/christopher-wong/teslatrack/vendor \
     -p 8000:8000 \
     --rm \
-    teslatrackd
+    christopherwong/teslatrack

@@ -7,3 +7,6 @@ build:
 
 run:
 	./scripts/docker-run.sh
+
+build-prod:
+	docker build -t christopherwong/teslatrack -f ./Dockerfile.prod .

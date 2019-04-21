@@ -8,16 +8,16 @@ RUN mkdir -p /go/src/github.com/christopher-wong/teslatrack
 WORKDIR /go/src/github.com/christopher-wong/teslatrack
 
 # add deps
-ADD Gopkg.toml Gopkg.toml
-ADD Gopkg.lock Gopkg.lock
+ADD . .
 
 # install packages, cached by docker
 RUN dep ensure --vendor-only -v
 
 EXPOSE 8000
 
-RUN ls -al
+WORKDIR /go/src/github.com/christopher-wong/teslatrack/cmd/teslatrackd
+RUN go build .
 
 # build binary and run bunary
-CMD ["./scripts/go-build-run.sh"]
+CMD ["./teslatrackd"]
 

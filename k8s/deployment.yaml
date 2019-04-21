@@ -14,9 +14,11 @@ spec:
       labels:
         app: tesla-track
     spec:
+      imagePullSecrets:
+      - name: regcred
       containers:
       - name: tesla-track
-        image: teslatrackd:latest
+        image: christopherwong/teslatrack:latest
         ports:
         - containerPort: 8000
 

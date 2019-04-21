@@ -3,4 +3,4 @@
 set -e
 set -x
 
-docker build -t teslatrackd -f Dockerfile .
+docker build -t christopherwong/teslatrack -f Dockerfile .
