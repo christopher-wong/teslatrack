@@ -1,7 +1,6 @@
 package server
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -30,21 +29,9 @@ func (s *Server) GetChargingSessionDetails(w http.ResponseWriter, r *http.Reques
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	userEmail := claims["email"]
+	userID := claims["user_id"]
 
-	// get the user's userID from the database
-	var userID int
-	err = s.db.QueryRow("SELECT id FROM users WHERE email=$1", userEmail).Scan(&userID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	fmt.Println(userID)
 
 	query := `
 		SELECT w1.timestamp,

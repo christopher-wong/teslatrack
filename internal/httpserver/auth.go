@@ -20,7 +20,8 @@ type Credentials struct {
 }
 
 type Claims struct {
-	Email string `json:"email"`
+	Email  string `json:"email"`
+	UserID int    `json:"user_id"`
 	jwt.StandardClaims
 }
 
@@ -51,12 +52,28 @@ func (s *Server) GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 	if err = bcrypt.CompareHashAndPassword([]byte(storedCreds.Password), []byte(creds.Password)); err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	// get the user's userID from the database
+	var userID int
+	err = s.db.QueryRow("SELECT id FROM users WHERE email=$1", creds.Email).Scan(&userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	// set expiration
 	expirationTime := time.Now().Add(60 * time.Minute)
 	claims := &Claims{
-		Email: creds.Email,
+		Email:  storedCreds.Email,
+		UserID: userID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},

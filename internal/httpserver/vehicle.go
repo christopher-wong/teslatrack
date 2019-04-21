@@ -28,21 +28,7 @@ func (s *Server) GetVehicleBasicSummary(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	userEmail := claims["email"]
-
-	// get the user's userID from the database
-	var userID int
-	err = s.db.QueryRow("SELECT id FROM users WHERE email=$1", userEmail).Scan(&userID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	userID := claims["user_id"]
 
 	query := `
 		SELECT timestamp,
