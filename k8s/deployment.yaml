@@ -18,7 +18,7 @@ spec:
       - name: regcred
       containers:
       - name: tesla-track
-        image: christopherwong/teslatrack:latest
+        image: christopherwong/teslatrack:latest-1
         ports:
         - containerPort: 8000
 

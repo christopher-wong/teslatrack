@@ -15,7 +15,6 @@ var AGlobalMapForJohn = make(map[string]string)
 type ChargingSessionDetailsQueryRow struct {
 	Timestamp     time.Time
 	ChargingState string
-	ChargeState   interface{}
 	Latitude      string
 	Longitude     string
 	Address       string
@@ -27,22 +26,19 @@ func (s *Server) GetChargingSessionDetails(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(err)
 		return
 	}
 	userID := claims["user_id"]
 
-	fmt.Println(userID)
-
 	query := `
 		SELECT w1.timestamp,
 			w1.charging_state,
-			w1.charge_state,
 			w1.latitude,
 			w1.longitude
 		FROM (SELECT w2.timestamp,
 					w2.data -> 'response' -> 'drive_state' ->> 'latitude'        as latitude,
 					w2.data -> 'response' -> 'drive_state' ->> 'longitude'       as longitude,
-					w2.data -> 'response' -> 'charge_state'                      as charge_state,
 					w2.data -> 'response' -> 'charge_state' ->> 'charging_state' as charging_state,
 					lead(w2.data -> 'response' -> 'charge_state' ->> 'charging_state')
 					OVER (ORDER BY w2.timestamp DESC)                            as prev_charging_state
@@ -50,6 +46,7 @@ func (s *Server) GetChargingSessionDetails(w http.ResponseWriter, r *http.Reques
 			WHERE user_id = $1
 			ORDER BY w2.timestamp DESC) as w1
 		WHERE w1.charging_state IS DISTINCT FROM w1.prev_charging_state
+		and w1.charging_state = 'Disconnected'
 		ORDER BY w1.timestamp DESC;
 	`
 
@@ -62,7 +59,7 @@ func (s *Server) GetChargingSessionDetails(w http.ResponseWriter, r *http.Reques
 	defer rows.Close()
 	for rows.Next() {
 		var rowStuct ChargingSessionDetailsQueryRow
-		err := rows.Scan(&rowStuct.Timestamp, &rowStuct.ChargingState, &rowStuct.ChargeState, &rowStuct.Latitude, &rowStuct.Longitude)
+		err := rows.Scan(&rowStuct.Timestamp, &rowStuct.ChargingState, &rowStuct.Latitude, &rowStuct.Longitude)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -71,6 +68,12 @@ func (s *Server) GetChargingSessionDetails(w http.ResponseWriter, r *http.Reques
 	err = rows.Err()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	// remove the last element in the array, as it's the first data point we record when a use signs up. Every other "Disconnected" state returned by
+	// this query must be a change in state from charging/complete -> disconnected
+	if len(charges) > 0 {
+		charges = charges[:len(charges)-1]
 	}
 
 	// convert all latlongs to formatted addresses

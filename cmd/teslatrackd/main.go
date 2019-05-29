@@ -13,28 +13,35 @@ import (
 	"github.com/ianschenck/envflag"
 
 	_ "github.com/lib/pq"
-)
-
-const (
-	host     = "teslatrack-stage-do-user-2432224-0.db.ondigitalocean.com"
-	port     = 25060
-	user     = "doadmin"
-	password = "a3uot0pp9bxzcxoa"
-	dbname   = "defaultdb"
-	sslmode  = "require"
-
-	redisHost     = "157.230.142.205:6379"
-	redisPassword = "FkNU6btkbjp+RwIG9529yJZG+EfNboVHEC6FzhpifbNMC0fIPC/MJP0/kvo3GYuT7LgkhGDVfE1gEDch"
+	"github.com/spf13/viper"
 )
 
 var (
 	listenAddr = envflag.String("TESLATRACK_LISTEN_ADDR", "0.0.0.0:8000", "address to listen on")
-	dev        = envflag.Bool("GLASS_DEV_MODE", true, "set dev to false to serve static assets in prod")
+	dev        = envflag.Bool("DEV_MODE", true, "set dev to false to serve static assets in prod")
 
 	jwtKey = []byte("my_secret_key")
 )
 
 func main() {
+	viper.SetConfigName("config") // name of config file (without extension)
+
+	viper.AddConfigPath(".")    // optionally look for config in the working directory
+	err := viper.ReadInConfig() // Find and read the config file
+	if err != nil {             // Handle errors reading the config file
+		panic(fmt.Errorf("fatal error config file: %s", err))
+	}
+
+	host := viper.GetString("postgres.host")
+	user := viper.GetString("postgres.user")
+	password := viper.GetString("postgres.password")
+	dbname := viper.GetString("postgres.dbname")
+	sslmode := viper.GetString("postgres.sslmode")
+	port := viper.GetInt("postgres.port")
+
+	redisHost := viper.GetString("redis.host")
+	redisPassword := viper.GetString("redis.password")
+
 	db, err := dbinit(host, user, password, dbname, sslmode, port)
 	if err != nil {
 		log.Fatal(err)

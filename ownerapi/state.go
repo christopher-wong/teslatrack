@@ -1,6 +1,7 @@
 package ownerapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -33,6 +34,11 @@ func (c *Client) GetVehicleData(id int64) ([]byte, error) {
 	}
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
+
+	fmt.Println("got vehicle data")
+
+	var decoded VehicleDataResponse
+	json.NewDecoder(resp.Body).Decode(&decoded)
 
 	return bodyBytes, nil
 }

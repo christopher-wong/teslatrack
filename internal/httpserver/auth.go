@@ -45,6 +45,7 @@ func (s *Server) GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(err)
 		return
 	}
 
@@ -62,10 +63,12 @@ func (s *Server) GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 		if err == sql.ErrNoRows {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(err)
 			return
 		}
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(err)
 		return
 	}
 
@@ -84,6 +87,7 @@ func (s *Server) GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 	tokenString, err := token.SignedString(s.cfg.JwtKey)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(err)
 		return
 	}
 
@@ -122,6 +126,7 @@ func (s *Server) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if _, err = s.db.Query("INSERT INTO users (email, password) VALUES ($1, $2)", creds.Email, string(hashedPassword)); err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(err)
 		return
 	}
 }

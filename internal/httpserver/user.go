@@ -27,6 +27,7 @@ func (s *Server) SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) 
 	client, err := ownerapi.NewClient(&http.Client{}, input)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(err)
 		return
 	}
 
@@ -35,6 +36,7 @@ func (s *Server) SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(err)
 		return
 	}
 	userID := claims["user_id"]
@@ -61,6 +63,8 @@ func (s *Server) SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) 
 	if _, err = s.db.Query(query, userID, resp.AccessToken, resp.TokenType, resp.ExpiresIn, resp.RefreshToken, resp.CreatedAt); err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(err)
+
 		return
 	}
 

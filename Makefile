@@ -1,12 +1,4 @@
-.PHONY: build run all
+.PHONY: all
 
-all: build run
-
-build:
-	./scripts/docker-build.sh
-
-run:
-	./scripts/docker-run.sh
-
-build-prod:
+all:
 	docker build -t christopherwong/teslatrack -f ./Dockerfile.prod .

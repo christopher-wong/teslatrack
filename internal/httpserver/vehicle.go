@@ -26,6 +26,7 @@ func (s *Server) GetVehicleBasicSummary(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(err)
 		return
 	}
 	userID := claims["user_id"]

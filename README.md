@@ -1,10 +1,12 @@
 # teslatrack
 
+## Local dev
+
 ```bash
-make
+docker-compose-up
 ```
 
-## Redis
+## Hosted on DigitalOcean
 
 ```bash
 redis-cli -h 157.230.142.205
