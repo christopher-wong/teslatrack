@@ -3,7 +3,7 @@
 ## Local dev
 
 ```bash
-docker-compose-up
+docker-compose up
 ```
 
 ## Hosted on DigitalOcean

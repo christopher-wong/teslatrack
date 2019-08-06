@@ -1,0 +1,55 @@
+-- detect when charging_state changes
+-- SELECT w1.timestamp,
+--        w1.charging_state,
+--        w1.charge_state,
+--        w1.latitude,
+--        w1.longitude,
+--        charge_energy_added
+-- FROM (SELECT w2.timestamp,
+--              w2.data -> 'response' -> 'drive_state' ->> 'latitude'        as latitude,
+--              w2.data -> 'response' -> 'drive_state' ->> 'longitude'       as longitude,
+--              w2.data -> 'response' -> 'charge_state'                      as charge_state,
+--              w2.data -> 'response' -> 'charge_state' ->> 'charging_state' as charging_state,
+--              w2.data -> 'response' -> 'charge_state' ->> 'charge_energy_added' as charge_energy_added,
+--              w2.data -> 'response' -> 'charge_state' ->> 'charge_energy_added' as charge_energy_added,
+--              lead(w2.data -> 'response' -> 'charge_state' ->> 'charging_state')
+--              OVER (ORDER BY w2.timestamp DESC)                            as prev_charging_state
+--       FROM state w2
+--       WHERE user_id = 1
+--       ORDER BY w2.timestamp DESC) as w1
+-- WHERE w1.charging_state IS DISTINCT FROM w1.prev_charging_state
+--   and w1.charging_state = 'Disconnected'
+-- ORDER BY w1.timestamp DESC;
+
+-- SELECT w1.timestamp,
+--        w1.charging_state,
+--        w1.charge_state,
+--        w1.latitude,
+--        w1.longitude
+-- FROM (SELECT w2.timestamp,
+--              w2.data -> 'response' -> 'drive_state' ->> 'latitude'        as latitude,
+--              w2.data -> 'response' -> 'drive_state' ->> 'longitude'       as longitude,
+--              w2.data -> 'response' -> 'charge_state'                      as charge_state,
+--              w2.data -> 'response' -> 'charge_state' ->> 'charging_state' as charging_state,
+--              lead(w2.data -> 'response' -> 'charge_state' ->> 'charging_state')
+--              OVER (ORDER BY w2.timestamp DESC)                            as prev_charging_state
+--       FROM state w2
+--       WHERE user_id = 1
+--       ORDER BY w2.timestamp DESC) as w1
+-- WHERE w1.charging_state IS DISTINCT FROM w1.prev_charging_state
+-- ORDER BY w1.timestamp DESC;
+
+-- get charge_state object where charging_state is charging
+-- SELECT timestamp,
+--        data -> 'response' -> 'charge_state' as charge_state,
+--        data -> 'response' -> 'drive_state' ->> 'latitude' as latitude,
+--        data -> 'response' -> 'drive_state' ->> 'longitude' as longitude
+-- FROM state
+-- WHERE user_id = 1
+--   AND data -> 'response' -> 'charge_state' ->> 'charging_state' = 'Charging'
+-- ORDER BY timestamp DESC
+
+-- get all rows where charging_state is charging
+-- SELECT *
+-- FROM state
+-- WHERE data -> 'response' -> 'charge_state' ->> 'charging_state' = 'Charging'

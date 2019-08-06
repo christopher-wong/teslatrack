@@ -3,7 +3,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"github.com/christopher-wong/teslatrack/services"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 
 	server "github.com/christopher-wong/teslatrack/internal/httpserver"
@@ -26,11 +27,14 @@ var (
 func main() {
 	viper.SetConfigName("config") // name of config file (without extension)
 
-	viper.AddConfigPath(".")    // optionally look for config in the working directory
+	viper.AddConfigPath(".") // optionally look for config in the working directory
+	viper.AddConfigPath("../../")
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
 		panic(fmt.Errorf("fatal error config file: %s", err))
 	}
+
+	fetch := viper.GetBool("teslatrack.fetch")
 
 	host := viper.GetString("postgres.host")
 	user := viper.GetString("postgres.user")
@@ -58,8 +62,12 @@ func main() {
 		JwtKey:        jwtKey,
 	}
 
+	// run services jobs
+	svcClient := services.New(db, log.New())
+	go svcClient.CalculateBatteryDegradationStats()
+
 	// start API server
-	app, err := server.New(cfg, db)
+	app, err := server.New(cfg, db, svcClient)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,8 +81,10 @@ func main() {
 	// run background tasks to poll car
 	go runBackgroundPoll(rc, db)
 
-	// run background task to push work to Redis
-	go runBackgroundQueuer(rc, db)
+	if fetch {
+		// run background task to push work to Redis
+		go runBackgroundQueuer(rc, db)
+	}
 
 	// stop main thread from exiting
 	select {}

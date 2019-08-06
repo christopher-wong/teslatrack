@@ -31,7 +31,7 @@ func (c *Client) RunQueuer() {
 
 	// run loop forever every minute
 	for {
-		time.Sleep(5 * time.Second)
+		time.Sleep(60 * time.Second)
 
 		// query db for all users and push them onto the queue
 		rows, err := c.Store.Query(query)

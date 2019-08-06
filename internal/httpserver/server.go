@@ -8,17 +8,20 @@ import (
 
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/codegangsta/negroni"
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
+
+	"github.com/christopher-wong/teslatrack/services"
 )
 
 // Server is the translations server
 type Server struct {
-	cfg    *Config
-	router *mux.Router
-	db     *sql.DB
+	cfg      *Config
+	router   *mux.Router
+	db       *sql.DB
+	services *services.ServicesClient
 }
 
 // Config is the server configuration
@@ -45,16 +48,17 @@ func (s *Server) Run() error {
 }
 
 // New returns a configured glass server.
-func New(cfg *Config, db *sql.DB) (*Server, error) {
+func New(cfg *Config, db *sql.DB, services *services.ServicesClient) (*Server, error) {
 	// Default to port 8001.
 	if cfg.ListenAddress == "" {
 		cfg.ListenAddress = "0.0.0.0:8001"
 	}
 
 	srv := &Server{
-		cfg:    cfg,
-		router: mux.NewRouter(),
-		db:     db,
+		cfg:      cfg,
+		router:   mux.NewRouter(),
+		db:       db,
+		services: services,
 	}
 
 	srv.router.HandleFunc("/user/auth/token", srv.GetTokenHandler).Methods("POST")
@@ -64,6 +68,8 @@ func New(cfg *Config, db *sql.DB) (*Server, error) {
 	srv.router.Handle("/user/tesla-account", wrapAuthHandler(cfg.JwtKey, srv.SetTeslaAccountHandler)).Methods("POST")
 	srv.router.Handle("/vehicle/basic-summary", wrapAuthHandler(cfg.JwtKey, srv.GetVehicleBasicSummary)).Methods("GET")
 	srv.router.Handle("/vehicle/charging/sessions", wrapAuthHandler(cfg.JwtKey, srv.GetChargingSessionDetails)).Methods("GET")
+
+	srv.router.Handle("/vehicle/freqcount", wrapAuthHandler(cfg.JwtKey, srv.GetPctCompletionFreqCount)).Methods("GET")
 
 	return srv, nil
 }

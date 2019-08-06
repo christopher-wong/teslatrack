@@ -3,14 +3,13 @@ package server
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,7 +20,7 @@ type Credentials struct {
 
 type Claims struct {
 	Email  string `json:"email"`
-	UserID int    `json:"user_id"`
+	UserID int32    `json:"user_id"`
 	jwt.StandardClaims
 }
 
@@ -57,7 +56,7 @@ func (s *Server) GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the user's userID from the database
-	var userID int
+	var userID int32
 	err = s.db.QueryRow("SELECT id FROM users WHERE email=$1", creds.Email).Scan(&userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -131,10 +130,12 @@ func (s *Server) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) GetJWTClaims(tk string) (jwt.MapClaims, error) {
+func (s *Server) GetJWTClaims(tk string) (*Claims, error) {
 	tkReplaced := strings.Replace(tk, "Bearer ", "", -1)
 
-	token, err := jwt.Parse(tkReplaced, func(token *jwt.Token) (interface{}, error) {
+	claims := &Claims{}
+
+	token, err := jwt.ParseWithClaims(tkReplaced, claims, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
@@ -147,9 +148,9 @@ func (s *Server) GetJWTClaims(tk string) (jwt.MapClaims, error) {
 		return nil, err
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims, nil
+	if !token.Valid {
+		return nil, err
 	}
 
-	return nil, errors.New("failed to validate claims")
+	return claims, nil
 }

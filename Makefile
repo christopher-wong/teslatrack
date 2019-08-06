@@ -1,4 +1,7 @@
-.PHONY: all
+.PHONY: all build-prod
 
 all:
-	docker build -t christopherwong/teslatrack -f ./Dockerfile.prod .
+	docker-compose up
+
+build-prod:
+	docker build -t christopherwong/teslatrack:0.0.6 -f ./Dockerfile.prod .

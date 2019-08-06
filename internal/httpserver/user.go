@@ -39,7 +39,7 @@ func (s *Server) SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) 
 		json.NewEncoder(w).Encode(err)
 		return
 	}
-	userID := claims["user_id"]
+	userID := claims.UserID
 
 	// write their tesla auth object to the database
 	query := `

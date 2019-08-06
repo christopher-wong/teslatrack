@@ -29,7 +29,7 @@ func (s *Server) GetChargingSessionDetails(w http.ResponseWriter, r *http.Reques
 		json.NewEncoder(w).Encode(err)
 		return
 	}
-	userID := claims["user_id"]
+	userID := claims.UserID
 
 	query := `
 		SELECT w1.timestamp,

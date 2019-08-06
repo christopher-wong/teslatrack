@@ -1,24 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tesla-track
+  name: teslatrack-api
   labels:
-    app: tesla-track
+    app: teslatrack-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tesla-track
+      app: teslatrack-api
   template:
     metadata:
       labels:
-        app: tesla-track
+        app: teslatrack-api
     spec:
       imagePullSecrets:
       - name: regcred
       containers:
-      - name: tesla-track
-        image: christopherwong/teslatrack:latest-1
+      - name: teslatrack-api
+        image: christopherwong/teslatrack:0.0.6
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
 
