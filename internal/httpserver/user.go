@@ -8,6 +8,8 @@ import (
 	"github.com/christopher-wong/teslatrack/ownerapi"
 )
 
+// SetTeslaAccountHandler stores a user's Tesla API access token given their
+// Tesla Owner account.
 func (s *Server) SetTeslaAccountHandler(w http.ResponseWriter, r *http.Request) {
 	// These are a user's Tesla creds.
 	// NEVER store these, just grab their token.

@@ -10,5 +10,5 @@ postgres:
   sslmode: "require"
 
 redis:
-  host: "157.230.142.205:6379"
-  password: "FkNU6btkbjp+RwIG9529yJZG+EfNboVHEC6FzhpifbNMC0fIPC/MJP0/kvo3GYuT7LgkhGDVfE1gEDch"
+  host: "teslatrack-redis-stage-do-user-2432224-0.db.ondigitalocean.com:25061"
+  password: "qdl9g23jherwdh7f"

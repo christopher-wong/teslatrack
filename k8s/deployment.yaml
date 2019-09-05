@@ -18,7 +18,7 @@ spec:
       - name: regcred
       containers:
       - name: teslatrack-api
-        image: christopherwong/teslatrack:0.0.6
+        image: christopherwong/teslatrack:0.0.8
         imagePullPolicy: Always
         ports:
         - containerPort: 8000

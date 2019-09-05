@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+// GetPctCompletionFreqCount generaetes a frequency count map for all the
+// completed charges at given percentages
 func (s *Server) GetPctCompletionFreqCount(w http.ResponseWriter, r *http.Request) {
 	// get the user's email from the JWT
 	claims, err := s.GetJWTClaims(r.Header.Get("Authorization"))
@@ -32,7 +34,7 @@ func (s *Server) GetPctCompletionFreqCount(w http.ResponseWriter, r *http.Reques
 		// key = completed charge %
 		// value = count
 		if _, ok := pctCompletionFreqCount[row.BatteryLevel]; ok {
-			pctCompletionFreqCount[row.BatteryLevel] += 1
+			pctCompletionFreqCount[row.BatteryLevel]++
 		} else {
 			pctCompletionFreqCount[row.BatteryLevel] = 1
 		}

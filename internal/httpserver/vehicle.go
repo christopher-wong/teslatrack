@@ -14,19 +14,19 @@ type VehicleBasicSummary struct {
 	Timestamp   time.Time `json:"timestamp"`
 	DisplayName string    `json:"display_name"`
 	Odometer    float64   `json:"odometer"`
-	InsideTemp  float32   `json:"inside_temp"`
-	OutsideTemp float32   `json:"outside_temp"`
+	InsideTemp  *float32  `json:"inside_temp"`
+	OutsideTemp *float32  `json:"outside_temp"`
 	ChargeState struct {
-		BatteryLevel          int     `json:"battery_level"`
-		BatteryRange          float32 `json:"battery_range"`
-		ChargePower           float32 `json:"charge_power"`
-		ChargerRate           float32 `json:"charge_rate"`
-		ChargerActualCurrent  float32 `json:"charger_actual_current"`
-		ChargerCurrentRequest float32 `json:"charge_current_request"`
-		ChargerVoltage        int32   `json:"charger_voltage"`
-		ChargingState         string  `json:"charging_state"`
-		EstBatteryRange       float32 `json:"est_battery_range"`
-		TimeToFullCharge      float32 `json:"time_to_full_charge"`
+		BatteryLevel          *int     `json:"battery_level"`
+		BatteryRange          *float32 `json:"battery_range"`
+		ChargePower           *float32 `json:"charge_power"`
+		ChargerRate           *float32 `json:"charge_rate"`
+		ChargerActualCurrent  *float32 `json:"charger_actual_current"`
+		ChargerCurrentRequest *float32 `json:"charge_current_request"`
+		ChargerVoltage        *int32   `json:"charger_voltage"`
+		ChargingState         *string  `json:"charging_state"`
+		EstBatteryRange       *float32 `json:"est_battery_range"`
+		TimeToFullCharge      *float32 `json:"time_to_full_charge"`
 	} `json:"charge_state"`
 }
 

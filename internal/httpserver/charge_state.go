@@ -10,8 +10,10 @@ import (
 	"github.com/christopher-wong/teslatrack/internal/google"
 )
 
-var AGlobalMapForJohn = make(map[string]string)
+var locationCache = make(map[string]string)
 
+// ChargingSessionDetailsQueryRow represents a response from querying for
+// charge session details.
 type ChargingSessionDetailsQueryRow struct {
 	Timestamp     time.Time
 	ChargingState string
@@ -20,6 +22,7 @@ type ChargingSessionDetailsQueryRow struct {
 	Address       string
 }
 
+// GetChargingSessionDetails retrieves a summary of recent charging sessions.
 func (s *Server) GetChargingSessionDetails(w http.ResponseWriter, r *http.Request) {
 	// get the user's email from the JWT
 	claims, err := s.GetJWTClaims(r.Header.Get("Authorization"))
@@ -83,11 +86,11 @@ func (s *Server) GetChargingSessionDetails(w http.ResponseWriter, r *http.Reques
 		latLongString := fmt.Sprintf("%s,%s", c.Latitude, c.Longitude)
 
 		// if latlong string in cache, grab it, if not, insert it
-		if val, ok := AGlobalMapForJohn[latLongString]; ok {
+		if val, ok := locationCache[latLongString]; ok {
 			c.Address = val
 		} else {
 			addr := google.ReverseGeocode(&http.Client{}, c.Latitude, c.Longitude)
-			AGlobalMapForJohn[latLongString] = addr
+			locationCache[latLongString] = addr
 			c.Address = addr
 		}
 

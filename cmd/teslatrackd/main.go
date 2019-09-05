@@ -1,11 +1,13 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"fmt"
+	"net/http"
+
 	"github.com/christopher-wong/teslatrack/services"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 
 	server "github.com/christopher-wong/teslatrack/internal/httpserver"
 	"github.com/christopher-wong/teslatrack/poll"
@@ -115,6 +117,9 @@ func redisinit(host, password string) (*redis.Client, error) {
 		Addr:     host,
 		Password: password, // no password set
 		DB:       0,        // use default DB
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
 	})
 
 	_, err := rc.Ping().Result()

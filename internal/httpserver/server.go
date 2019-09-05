@@ -44,6 +44,8 @@ func (s *Server) Run() error {
 
 	log.Printf("API server listening on %s", s.cfg.ListenAddress)
 
+	s.TeslaOwnerTokenRefresh()
+
 	return http.ListenAndServe(s.cfg.ListenAddress, handlers.LoggingHandler(os.Stdout, handler))
 }
 

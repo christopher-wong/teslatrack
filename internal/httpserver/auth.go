@@ -13,17 +13,62 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Credentials stores the email and password used to login to the Tesla API or
+// the teslatrack api
 type Credentials struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+// Claims is a custom claims object that wraps jwt.StandardClaims
 type Claims struct {
 	Email  string `json:"email"`
-	UserID int32    `json:"user_id"`
+	UserID int32  `json:"user_id"`
 	jwt.StandardClaims
 }
 
+// calculate when a given token expires and if it's within 7 days of the
+// current time, return true.
+func needsRefresh(createdAt, expiresIn int64) bool {
+	expiresAtTime := time.Unix(createdAt+expiresIn, 0)
+
+	fmt.Println(expiresAtTime)
+
+	return expiresAtTime.After(time.Now()) && expiresAtTime.Before(time.Now().Add(24*7*time.Hour))
+}
+
+// look at all the tokens in the database, refresh any that are about to expire.
+func (s *Server) TeslaOwnerTokenRefresh() error {
+	rows, err := s.db.Query("SELECT expires_in, refresh_token, created_at FROM tesla_auth")
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var expiresIn int64
+		var refreshToken string
+		var createdAt int64
+		err = rows.Scan(&expiresIn, &refreshToken, &createdAt)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		if needsRefresh(createdAt, expiresIn) {
+			// hit tesla auth endpoint and pass refresh token
+		}
+	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+// GetTokenHandler creates a JWT after verifying a user's credentials.
 func (s *Server) GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 	creds := &Credentials{}
 	err := json.NewDecoder(r.Body).Decode(creds)
@@ -106,6 +151,7 @@ func (s *Server) GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(tr)
 }
 
+// SignupHandler creates a new account and hashes the user password
 func (s *Server) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	creds := &Credentials{}
 	err := json.NewDecoder(r.Body).Decode(creds)
@@ -130,6 +176,7 @@ func (s *Server) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetJWTClaims retrieves a JWT from a cplains struct.
 func (s *Server) GetJWTClaims(tk string) (*Claims, error) {
 	tkReplaced := strings.Replace(tk, "Bearer ", "", -1)
 
