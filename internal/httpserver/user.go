@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/christopher-wong/teslatrack/ownerapi"
+	"teslatrack/ownerapi"
 )
 
 // SetTeslaAccountHandler stores a user's Tesla API access token given their

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/christopher-wong/teslatrack/internal/google"
+	"teslatrack/internal/google"
 )
 
 var locationCache = make(map[string]string)

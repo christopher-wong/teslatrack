@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/christopher-wong/teslatrack/services"
+	"teslatrack/poll"
+	"teslatrack/queuer"
+	"teslatrack/services"
+
 	log "github.com/sirupsen/logrus"
 
-	server "github.com/christopher-wong/teslatrack/internal/httpserver"
-	"github.com/christopher-wong/teslatrack/poll"
-	"github.com/christopher-wong/teslatrack/queuer"
+	server "teslatrack/internal/httpserver"
+
 	"github.com/go-redis/redis"
 	"github.com/ianschenck/envflag"
 

@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 
-	"github.com/christopher-wong/teslatrack/services"
+	"teslatrack/services"
 )
 
 // Server is the translations server

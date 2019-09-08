@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/christopher-wong/teslatrack/ownerapi"
+	"teslatrack/ownerapi"
 	"github.com/go-redis/redis"
 )
 
