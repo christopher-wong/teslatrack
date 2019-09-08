@@ -17,4 +17,4 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Build
-      run: ./scripts/go-build-run.sh
+      run: ./scripts/go-build.sh
