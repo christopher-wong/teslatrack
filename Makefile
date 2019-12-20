@@ -3,5 +3,5 @@
 all:
 	docker-compose up
 
-build-prod:
-	docker build -t christopherwong/teslatrack:0.0.8 -f ./Dockerfile.prod .
+build:
+	docker build -t registry.digitalocean.com/teslatrack/teslatrack_api:0.0.8 -f ./Dockerfile.prod .

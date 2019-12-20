@@ -15,10 +15,10 @@ spec:
         app: teslatrack-api
     spec:
       imagePullSecrets:
-      - name: regcred
+      - name: do-registry
       containers:
       - name: teslatrack-api
-        image: christopherwong/teslatrack:0.0.8
+        image: registry.digitalocean.com/teslatrack/teslatrack_api:0.0.8
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
