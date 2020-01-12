@@ -4,4 +4,4 @@ all:
 	docker-compose up
 
 build:
-	docker build -t registry.digitalocean.com/teslatrack/teslatrack_api:0.0.9 -f ./Dockerfile.prod .
+	docker build -t registry.digitalocean.com/teslatrack/teslatrack_api:0.0.10 -f ./Dockerfile.prod .

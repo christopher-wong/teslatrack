@@ -18,7 +18,7 @@ spec:
       - name: do-registry
       containers:
       - name: teslatrack-api
-        image: registry.digitalocean.com/teslatrack/teslatrack_api:0.0.9
+        image: registry.digitalocean.com/teslatrack/teslatrack_api:0.0.10
         imagePullPolicy: Always
         ports:
         - containerPort: 8000

@@ -1,15 +1,33 @@
 package server
 
 import (
+	"database/sql/driver"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"time"
 )
 
+type PropertyMap map[string]interface{}
+
+func (p PropertyMap) Value() (driver.Value, error) {
+	j, err := json.Marshal(p)
+	return j, err
+}
+
+func (a *PropertyMap) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(b, &a)
+}
+
 type RawResult struct {
 	Timestamp time.Time
-	Data      map[string]interface{}
+	Data      PropertyMap
 }
 
 // GetLatestRawEntries retrieves the latest raw entries.
