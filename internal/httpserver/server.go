@@ -70,6 +70,7 @@ func New(cfg *Config, db *sql.DB, services *services.ServicesClient) (*Server, e
 	srv.router.Handle("/user/tesla-account", wrapAuthHandler(cfg.JwtKey, srv.SetTeslaAccountHandler)).Methods("POST")
 	srv.router.Handle("/vehicle/basic-summary", wrapAuthHandler(cfg.JwtKey, srv.GetVehicleBasicSummary)).Methods("GET")
 	srv.router.Handle("/vehicle/charging/sessions", wrapAuthHandler(cfg.JwtKey, srv.GetChargingSessionDetails)).Methods("GET")
+	srv.router.Handle("/vehicle/status/raw", wrapAuthHandler(cfg.JwtKey, srv.GetLatestRawEntries)).Methods("GET")
 
 	srv.router.Handle("/vehicle/freqcount", wrapAuthHandler(cfg.JwtKey, srv.GetPctCompletionFreqCount)).Methods("GET")
 

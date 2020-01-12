@@ -12,5 +12,5 @@ WORKDIR /go/src/github.com/christopher-wong/teslatrack/cmd/teslatrackd
 RUN go build .
 
 # build binary and run bunary
-CMD ["./scripts/go-build.sh"]
+CMD ["./teslatrackd"]
 

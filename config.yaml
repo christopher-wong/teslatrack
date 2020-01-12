@@ -1,5 +1,5 @@
 teslatrack:
-  fetch: true
+  fetch: false
 
 postgres:
   host: "teslatrack-stage-do-user-2432224-0.db.ondigitalocean.com"
