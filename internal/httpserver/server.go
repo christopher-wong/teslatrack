@@ -63,7 +63,7 @@ func New(cfg *Config, db *sql.DB, services *services.ServicesClient) (*Server, e
 		services: services,
 	}
 
-	srv.router.HandleFunc("/user/auth/token", srv.GetTokenHandler).Methods("POST")
+	srv.router.Handle("/user/auth/token", wrapAuthHandler(cfg.JwtKey, srv.GetTokenHandler)).Methods("POST")
 	srv.router.HandleFunc("/user/auth/signup", srv.SignupHandler).Methods("POST")
 
 	// protected routes
